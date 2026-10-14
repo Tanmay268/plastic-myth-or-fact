@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Plastic: Myth or Fact?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg1:#e8f8ef; --bg2:#fff6e0; --card:#ffffff; --ink:#1f3d36; --muted:#5d7a72; --fact:#22b573; --fact-d:#168a55; --myth:#ff6b6b; --myth-d:#d94848; --accent:#ffb703; --accent-d:#d98f00; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; height:100%; color:var(--ink); font-family:'Nunito',system-ui,Segoe UI,Roboto,sans-serif; font-weight:700; overflow:hidden;
+    background: radial-gradient(circle at 15% 10%, #ffffffaa 0, transparent 40%), linear-gradient(160deg,var(--bg1),var(--bg2)); }
+  h1,h2,.score,.hud { font-family:'Baloo 2','Nunito',system-ui,sans-serif; }
+  body::before, body::after { content:'🍃'; position:fixed; font-size:2.2rem; opacity:.25; animation:float 7s ease-in-out infinite; pointer-events:none; }
+  body::before { top:8%; left:6%; } body::after { content:'☁️'; top:14%; right:7%; animation-delay:-3s; font-size:2.8rem; }
+  @keyframes float { 0%,100%{transform:translateY(0) rotate(-6deg)} 50%{transform:translateY(-14px) rotate(6deg)} }
+  @keyframes pop { 0%{transform:scale(.85);opacity:0} 100%{transform:scale(1);opacity:1} }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  #app { max-width:480px; height:100%; margin:0 auto; padding:16px; display:flex; flex-direction:column; position:relative; z-index:1; padding-bottom:100px; }
+  .screen { display:none; flex:1; min-height:0; flex-direction:column; overflow-y:auto; overflow-x:hidden; }
+  .screen.on { display:flex; animation:pop .35s ease-out; }
+  h1 { font-size:2.3rem; line-height:1.1; margin:6px 0; font-weight:800; }
+  p.sub { color:var(--muted); line-height:1.5; margin:4px 0; }
+  .center { justify-content:safe center; align-items:center; text-align:center; gap:12px; }
+  .mascot { font-size:4.2rem; animation:bounce 2s ease-in-out infinite; }
+  button.big { background:var(--accent); color:#3b2a00; border:0; border-radius:18px; padding:14px 32px; font:800 1.15rem 'Baloo 2','Nunito',sans-serif; cursor:pointer; text-decoration:none; display:inline-block; box-shadow:0 5px 0 var(--accent-d); transition:transform .08s, box-shadow .08s; }
+  button.big:active, a.big:active { transform:translateY(4px); box-shadow:0 1px 0 var(--accent-d); }
+  a.big { background:var(--fact); color:#fff; border-radius:18px; padding:14px 28px; font:800 1.15rem 'Baloo 2','Nunito',sans-serif; text-decoration:none; box-shadow:0 5px 0 var(--fact-d); display:inline-block; }
+  button.ghost { background:#fff; color:var(--ink); box-shadow:0 5px 0 #cfe3da; }
+  .hud { display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:1.05rem; }
+  .hud span { background:#fff; border-radius:999px; padding:4px 14px; box-shadow:0 2px 8px #1f3d3614; }
+  .bar { height:12px; background:#ffffffcc; border-radius:6px; margin:12px 0 18px; overflow:hidden; box-shadow:inset 0 1px 3px #1f3d3622; }
+  .bar > i { display:block; height:100%; width:0; background:linear-gradient(90deg,#4fd69c,var(--fact)); border-radius:6px; transition:width .4s; }
+  .stage { flex:1; position:relative; display:flex; align-items:center; justify-content:center; }
+  .card { position:absolute; width:100%; max-width:340px; min-height:270px; background:var(--card); color:var(--ink); border-radius:28px; padding:30px 24px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:1.3rem; font-weight:800; line-height:1.4; box-shadow:0 14px 0 #d7ebe2, 0 22px 30px #1f3d3622; touch-action:none; user-select:none; cursor:grab; animation:pop .3s ease-out; }
+  .card .tag { position:absolute; top:18px; font:800 1.4rem 'Baloo 2',sans-serif; border:3px solid; border-radius:12px; padding:0 10px; opacity:0; background:#fff; }
+  .card .tag.f { left:18px; color:var(--fact); transform:rotate(-12deg); }
+  .card .tag.m { right:18px; color:var(--myth); transform:rotate(12deg); }
+  .btns { display:flex; gap:14px; padding:14px 0 6px; }
+  .btns button { flex:1; border:0; border-radius:18px; padding:14px; font:800 1.15rem 'Baloo 2','Nunito',sans-serif; color:#fff; cursor:pointer; transition:transform .08s, box-shadow .08s; }
+  .btns .m { background:var(--myth); box-shadow:0 5px 0 var(--myth-d); }
+  .btns .f { background:var(--fact); box-shadow:0 5px 0 var(--fact-d); }
+  .btns button:active { transform:translateY(4px); box-shadow:0 1px 0 #0003; }
+  .hint { text-align:center; color:var(--muted); font-size:.85rem; padding-bottom:6px; }
+  #feedback { position:absolute; inset:0; background:#f4fbf7ee; backdrop-filter:blur(4px); display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:28px; gap:12px; z-index:5; border-radius:20px; }
+  #feedback.on { display:flex; animation:pop .25s ease-out; }
+  #feedback h2 { font-size:2.2rem; margin:0; }
+  #feedback p { font-size:1.05rem; line-height:1.5; max-width:340px; color:var(--ink); }
+  .good { color:var(--fact-d); } .bad { color:var(--myth-d); }
+  .score { font-size:3.4rem; font-weight:800; color:var(--accent-d); }
+  .tiny { font-size:.8rem; color:var(--muted); }
+  #bins { position:fixed; left:0; right:0; bottom:0; height:96px; display:flex; justify-content:center; align-items:flex-end; gap:14px; z-index:0; pointer-events:none; padding-bottom:0; background:linear-gradient(transparent,#c9ead9 60%); }
+  .bin { width:64px; text-align:center; opacity:.75; transition:opacity .3s, transform .3s, filter .3s; }
+  .bin .lid { height:10px; background:var(--c); border-radius:6px 6px 0 0; width:72px; margin:0 -4px; filter:brightness(1.12); }
+  .bin .body { height:50px; background:var(--c); clip-path:polygon(0 0,100% 0,90% 100%,10% 100%); display:flex; align-items:center; justify-content:center; font-size:1.4rem; }
+  .bin .lbl { font-size:.6rem; line-height:1.15; padding:3px 0 5px; font-weight:800; color:var(--ink); }
+  .bin.hl { opacity:1; transform:translateY(-12px) scale(1.12); filter:drop-shadow(0 6px 10px var(--c)); animation:bounce .6s ease-in-out 2; }
+  .hook { background:#fff; border-radius:18px; padding:12px 18px; font-size:1rem; line-height:1.5; max-width:380px; box-shadow:0 4px 14px #1f3d3614; }
+  .hook b { color:var(--fact-d); }
+  @media (max-height:720px) {
+    #app { padding-bottom:92px; }
+    .center { gap:8px; }
+    h1 { font-size:1.8rem; }
+    .mascot { font-size:3rem; }
+    .score { font-size:2.4rem; }
+    .hook { padding:8px 14px; font-size:.92rem; }
+    button.big, a.big { padding:10px 24px; font-size:1.05rem; }
+    #endMsg { font-size:.9rem; }
+  }
+  @media (max-height:560px) { .tiny { display:none; } }
+</style>
+</head>
+<body>
+<div id="bins" aria-hidden="true">
+  <div class="bin" data-bin="green"  style="--c:#1fa971"><div class="lid"></div><div class="body">🥬</div><div class="lbl">GREEN<br>Wet waste</div></div>
+  <div class="bin" data-bin="blue"   style="--c:#3b82f6"><div class="lid"></div><div class="body">♻️</div><div class="lbl">BLUE<br>Dry / recyclable</div></div>
+  <div class="bin" data-bin="red"    style="--c:#e5484d"><div class="lid"></div><div class="body">🔋</div><div class="lbl">RED<br>Hazardous</div></div>
+  <div class="bin" data-bin="yellow" style="--c:#f5c542"><div class="lid"></div><div class="body">🩹</div><div class="lbl">YELLOW<br>Sanitary / bio</div></div>
+</div>
+<div id="app">
+
+  <section id="start" class="screen on center">
+    <div class="mascot">🐢</div>
+    <h1>Plastic: Myth or Fact?</h1>
+    <div class="hook">🌍 <b>Do you think you care about the environment?</b><br>
+      Let's see how much you <i>really</i> know about waste segregation.</div>
+    <p class="sub">10 quick statements. Swipe <b>right</b> for FACT, <b>left</b> for MYTH.<br>(Or use the buttons / arrow keys.)</p>
+    <button class="big" id="playBtn">Play</button>
+  </section>
+
+  <section id="game" class="screen">
+    <div class="hud"><span id="qnum">1/10</span><span id="streak">🔥 0</span><span id="score">0 pts</span></div>
+    <div class="bar"><i id="prog"></i></div>
+    <div class="stage" id="stage"></div>
+    <div class="btns">
+      <button class="m" id="mythBtn">← Myth</button>
+      <button class="f" id="factBtn">Fact →</button>
+    </div>
+    <div class="hint">Drag the card, or press ← / →</div>
+    <div id="feedback">
+      <h2 id="fbTitle"></h2>
+      <p id="fbText"></p>
+      <button class="big" id="nextBtn">Next</button>
+    </div>
+  </section>
+
+  <section id="end" class="screen center">
+    <div class="mascot" id="badgeIcon">🏆</div>
+    <h1 id="badge">Eco Hero</h1>
+    <div class="score" id="final">0/10</div>
+    <p class="sub" id="endMsg"></p>
+    <div class="hook">Knowing the rules is step one. <b>How does your campus actually behave?</b> Tell us in the survey.</div>
+    <a class="big" id="formLink" target="_blank" rel="noopener"
+       href="https://docs.google.com/forms/d/e/1FAIpQLSdfegigiNBIrNvOshGvOYtxy1XuAmpha7IZ3UqUY5Gisek_3Q/viewform?usp=header">📋 Now take the survey</a>
+    <button id="againBtn" class="big ghost">Play again</button>
+    <div class="tiny">Takes about 2 minutes. Your answers help our campus plastic study.</div>
+  </section>
+</div>
+
+<script>
+const FORM_URL = document.getElementById('formLink').href;
+
+const ALL = [
+  { t:"Most single-use plastic takes hundreds of years to break down.", a:true,  why:"Plastic doesn't truly biodegrade; it just fragments into smaller and smaller pieces." },
+  { t:"A plastic bottle can be recycled again and again forever with no loss in quality.", a:false, why:"Quality drops each cycle, so most bottles are 'downcycled' into lower-grade products." },
+  { bin:"green", t:"Wet food waste like fruit peels belongs in the green bin.", a:true, why:"Green is for wet/organic waste, which can be composted." },
+  { bin:"blue", t:"A clean plastic wrapper goes in the green (wet waste) bin.", a:false, why:"Clean, dry plastic goes in the blue dry/recyclable bin. Green is for wet waste." },
+  { bin:"blue", t:"Rinsing food containers before recycling actually helps.", a:true, why:"Food residue contaminates recyclables and can get a whole batch rejected." },
+  { t:"Tiny microplastics have been found in drinking water and even in human blood.", a:true, why:"Studies worldwide have detected microplastics in water, food, air and the human body." },
+  { bin:"red", t:"Used batteries can go in the normal dry-waste bin.", a:false, why:"Batteries are hazardous waste (red bin); they leak toxic metals." },
+  { t:"Carrying a reusable bottle can replace hundreds of disposable bottles a year.", a:true, why:"Four bottles a week is over 200 a year, from just one person." },
+  { t:"Plastic straws are too small to make a real difference.", a:false, why:"Small items are rarely recycled and are among the most common litter found in oceans." },
+  { t:"Only around 9% of all plastic ever made has been recycled.", a:true, why:"The vast majority ends up in landfills, burned, or in the environment." },
+  { t:"Burning plastic is a safe way to get rid of it.", a:false, why:"Burning releases toxic fumes like dioxins that harm health and air quality." },
+  { bin:"blue", t:"Mixing wet and dry waste makes recycling harder.", a:true, why:"Wet waste soils paper and plastic, which lowers what can be recycled." },
+  { bin:"blue", t:"Paper cups are always recyclable in the paper bin.", a:false, why:"Most have a thin plastic lining that regular paper recycling can't handle." },
+  { t:"A plastic bag may be used for minutes but lasts for centuries.", a:true, why:"Average use is about 12 minutes; breakdown takes hundreds of years." },
+];
+const ROUNDS = 10;
+
+const $ = id => document.getElementById(id);
+const show = id => { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); };
+let deck, i, score, streak, correct, locked, card;
+
+function shuffle(a){ for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]];} return a; }
+
+function start(){
+  deck = shuffle(ALL.slice()).slice(0, ROUNDS);
+  i = 0; score = 0; streak = 0; correct = 0;
+  show('game'); nextCard();
+}
+
+function nextCard(){
+  if (i >= ROUNDS) return finish();
+  locked = false;
+  $('feedback').classList.remove('on');
+  highlight(null);
+  $('qnum').textContent = (i+1) + '/' + ROUNDS;
+  $('prog').style.width = (i/ROUNDS*100) + '%';
+  $('streak').textContent = '🔥 ' + streak;
+  $('score').textContent = score + ' pts';
+  const stage = $('stage'); stage.innerHTML = '';
+  card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = '<span class="tag f">FACT</span><span class="tag m">MYTH</span>' + deck[i].t;
+  stage.appendChild(card);
+  attachDrag(card);
+}
+
+function attachDrag(el){
+  let sx=0, dragging=false, dx=0;
+  const tagF = el.querySelector('.f'), tagM = el.querySelector('.m');
+  el.addEventListener('pointerdown', e => { if(locked) return; dragging=true; sx=e.clientX; el.setPointerCapture(e.pointerId); el.style.transition='none'; });
+  el.addEventListener('pointermove', e => {
+    if(!dragging) return;
+    dx = e.clientX - sx;
+    el.style.transform = `translateX(${dx}px) rotate(${dx/18}deg)`;
+    tagF.style.opacity = Math.max(0, Math.min(1, dx/100));
+    tagM.style.opacity = Math.max(0, Math.min(1, -dx/100));
+  });
+  const end = () => {
+    if(!dragging) return; dragging=false;
+    if (Math.abs(dx) > 90) answer(dx > 0);
+    else { el.style.transition='transform .2s'; el.style.transform=''; tagF.style.opacity=tagM.style.opacity=0; }
+    dx = 0;
+  };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+}
+
+function answer(sayFact){
+  if (locked) return; locked = true;
+  const q = deck[i], ok = (sayFact === q.a);
+  card.style.transition = 'transform .3s, opacity .3s';
+  card.style.transform = `translateX(${sayFact?420:-420}px) rotate(${sayFact?25:-25}deg)`;
+  card.style.opacity = 0;
+  if (ok) { correct++; streak++; score += 10 + Math.min(streak-1, 5)*2; } else { streak = 0; }
+  $('score').textContent = score + ' pts';
+  $('streak').textContent = '🔥 ' + streak;
+  setTimeout(() => {
+    $('fbTitle').textContent = ok ? '✅ Correct!' : '❌ Not quite';
+    $('fbTitle').className = ok ? 'good' : 'bad';
+    $('fbText').innerHTML = '<b>That was a ' + (q.a ? 'FACT' : 'MYTH') + '.</b><br>' + q.why;
+    $('nextBtn').textContent = (i === ROUNDS-1) ? 'See result' : 'Next';
+    $('feedback').classList.add('on');
+    highlight(q.bin);
+  }, 250);
+}
+
+function highlight(b){ document.querySelectorAll('.bin').forEach(el => el.classList.toggle('hl', el.dataset.bin === b)); }
+
+function finish(){
+  highlight(null);
+  $('prog').style.width = '100%';
+  let b = ['🌱','Plastic Rookie','Good start! The survey is a chance to think about your own habits too.'];
+  if (correct >= 9) b = ['🏆','Eco Hero','Outstanding! You really know your waste. Help us see how the rest of campus compares.'];
+  else if (correct >= 6) b = ['♻️','Green Guardian','Nice work! A few myths slipped by, so your campus peers could use these facts too.'];
+  $('badgeIcon').textContent = b[0]; $('badge').textContent = b[1]; $('endMsg').textContent = b[2];
+  $('final').textContent = correct + '/' + ROUNDS + '  ·  ' + score + ' pts';
+  show('end');
+}
+
+$('playBtn').onclick = start;
+$('againBtn').onclick = start;
+$('nextBtn').onclick = () => { i++; nextCard(); };
+$('mythBtn').onclick = () => answer(false);
+$('factBtn').onclick = () => answer(true);
+document.addEventListener('keydown', e => {
+  if (!$('game').classList.contains('on')) return;
+  if ($('feedback').classList.contains('on')) { if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') $('nextBtn').click(); return; }
+  if (e.key === 'ArrowLeft') answer(false);
+  if (e.key === 'ArrowRight') answer(true);
+});
+</script>
+</body>
+</html>
